@@ -62,7 +62,7 @@ public class AtomicLong extends Number implements java.io.Serializable {
     }
 
     public boolean weakCompareAndSet(long expect, long update) {
-        return compareAndSet(expect, update);
+        return unsafe.compareAndSwapLong(this, offset, expect, update);
     }
 
     public final long getAndSet(long newValue) {

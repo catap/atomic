@@ -52,7 +52,9 @@ public class AtomicBoolean implements java.io.Serializable {
     }
 
     public boolean weakCompareAndSet(boolean expect, boolean update) {
-        return compareAndSet(expect, update);
+        int e = expect ? 1 : 0;
+        int u = update ? 1 : 0;
+        return unsafe.compareAndSwapInt(this, offset, e, u);
     }
 
     public final void set(boolean newValue) {

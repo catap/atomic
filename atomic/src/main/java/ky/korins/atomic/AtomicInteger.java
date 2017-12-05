@@ -62,7 +62,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
     }
 
     public boolean weakCompareAndSet(int expect, int update) {
-        return compareAndSet(expect, update);
+        return unsafe.compareAndSwapInt(this, offset, expect, update);
     }
 
     public final int getAndSet(int newValue) {

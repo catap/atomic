@@ -103,7 +103,7 @@ public class AtomicLongArray implements java.io.Serializable {
     }
 
     public final boolean weakCompareAndSet(int i, long expect, long update) {
-        return compareAndSet(i, expect, update);
+        return unsafe.compareAndSwapLong(array, i, expect, update);
     }
 
     public final long getAndIncrement(int i) {
