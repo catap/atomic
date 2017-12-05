@@ -2,22 +2,22 @@ package ky.korins.atomic;
 
 import sun.misc.Unsafe;
 
-import java.util.function.LongBinaryOperator;
-import java.util.function.LongUnaryOperator;
+import java.util.function.IntBinaryOperator;
+import java.util.function.IntUnaryOperator;
 
 public class AtomicIntegerArray implements java.io.Serializable {
     private static final long serialVersionUID = -800117181216365580L;
 
-    private final long backoffInterval;
+    private final int backoffInterval;
 
     private static final Unsafe unsafe = Java9Unsafe.getUnsafe();
 
-    private static final int base = unsafe.arrayBaseOffset(long[].class);
+    private static final int base = unsafe.arrayBaseOffset(int[].class);
 
-    private final long[] array;
+    private final int[] array;
 
     static {
-        int scale = unsafe.arrayIndexScale(long[].class);
+        int scale = unsafe.arrayIndexScale(int[].class);
         if ((scale & (scale - 1)) != 0)
             throw new Error("data type scale not a power of two");
         shift = 31 - Integer.numberOfLeadingZeros(scale);
@@ -37,24 +37,24 @@ public class AtomicIntegerArray implements java.io.Serializable {
     }
 
     public AtomicIntegerArray(int length) {
-        array = new long[length];
+        array = new int[length];
         backoffInterval = 1;
     }
 
-    public AtomicIntegerArray(int length, long backoffInterval) {
+    public AtomicIntegerArray(int length, int backoffInterval) {
         if (backoffInterval < 1) {
             throw new IllegalArgumentException("Backoff interval should be great than 0");
         }
-        this.array = new long[length];
+        this.array = new int[length];
         this.backoffInterval = backoffInterval;
     }
 
-    public AtomicIntegerArray(long[] array) {
+    public AtomicIntegerArray(int[] array) {
         this.array = array.clone();
         backoffInterval = 1;
     }
 
-    public AtomicIntegerArray(long[] array, long backoffInterval) {
+    public AtomicIntegerArray(int[] array, int backoffInterval) {
         if (backoffInterval < 1) {
             throw new IllegalArgumentException("Backoff interval should be great than 0");
         }
@@ -66,112 +66,110 @@ public class AtomicIntegerArray implements java.io.Serializable {
         return array.length;
     }
 
-    public final long get(int i) {
+    public final int get(int i) {
         return getRaw(checkedByteOffset(i));
     }
 
-    private long getRaw(long offset) {
-        return unsafe.getLongVolatile(array, offset);
+    private int getRaw(long offset) {
+        return unsafe.getIntVolatile(array, offset);
     }
 
-    public final void set(int i, long newValue) {
-        unsafe.putLongVolatile(array, checkedByteOffset(i), newValue);
+    public final void set(int i, int newValue) {
+        unsafe.putIntVolatile(array, checkedByteOffset(i), newValue);
     }
 
-    public final void lazySet(int i, long newValue) {
-        unsafe.putOrderedLong(array, checkedByteOffset(i), newValue);
+    public final void lazySet(int i, int newValue) {
+        unsafe.putOrderedInt(array, checkedByteOffset(i), newValue);
     }
 
-    public final long getAndSet(int i, long newValue) {
-        long current;
+    public final int getAndSet(int i, int newValue) {
+        int current;
         do {
             current = get(i);
         } while (!compareAndSet(i, current, newValue));
         return current;
     }
 
-    public final boolean compareAndSet(int i, long expect, long update) {
+    public final boolean compareAndSet(int i, int expect, int update) {
         return compareAndSetRaw(checkedByteOffset(i), expect, update);
     }
 
-    private boolean compareAndSetRaw(long offset, long expect, long update) {
-        if (unsafe.compareAndSwapLong(array, offset, expect, update)) {
+    private boolean compareAndSetRaw(long offset, int expect, int update) {
+        if (unsafe.compareAndSwapInt(array, offset, expect, update)) {
             return true;
         }
         unsafe.park(false, backoffInterval);
         return false;
     }
 
-    public final boolean weakCompareAndSet(int i, long expect, long update) {
-        return unsafe.compareAndSwapLong(array, i, expect, update);
+    public final boolean weakCompareAndSet(int i, int expect, int update) {
+        return unsafe.compareAndSwapInt(array, checkedByteOffset(i), expect, update);
     }
 
-    public final long getAndIncrement(int i) {
+    public final int getAndIncrement(int i) {
         return getAndAdd(i, 1);
     }
 
-    public final long getAndDecrement(int i) {
+    public final int getAndDecrement(int i) {
         return getAndAdd(i, -1);
     }
 
-    public final long getAndAdd(int i, long delta) {
-        long current;
+    public final int getAndAdd(int i, int delta) {
+        int current;
         do {
             current = get(i);
         } while (!compareAndSet(i, current, current + delta));
         return current;
     }
 
-    public final long incrementAndGet(int i) {
+    public final int incrementAndGet(int i) {
         return getAndAdd(i, 1) + 1;
     }
 
-    public final long decrementAndGet(int i) {
+    public final int decrementAndGet(int i) {
         return getAndAdd(i, -1) - 1;
     }
 
-    public long addAndGet(int i, long delta) {
+    public int addAndGet(int i, int delta) {
         return getAndAdd(i, delta) + delta;
     }
 
-    public final long getAndUpdate(int i, LongUnaryOperator updateFunction) {
+    public final int getAndUpdate(int i, IntUnaryOperator updateFunction) {
         long offset = checkedByteOffset(i);
-        long prev, next;
+        int prev, next;
         do {
             prev = getRaw(offset);
-            next = updateFunction.applyAsLong(prev);
+            next = updateFunction.applyAsInt(prev);
         } while (!compareAndSetRaw(offset, prev, next));
         return prev;
     }
 
-    public final long updateAndGet(int i, LongUnaryOperator updateFunction) {
+    public final int updateAndGet(int i, IntUnaryOperator updateFunction) {
         long offset = checkedByteOffset(i);
-        long prev, next;
+        int prev, next;
         do {
             prev = getRaw(offset);
-            next = updateFunction.applyAsLong(prev);
+            next = updateFunction.applyAsInt(prev);
         } while (!compareAndSetRaw(offset, prev, next));
         return next;
     }
 
-    public final long getAndAccumulate(int i, long x,
-                                       LongBinaryOperator accumulatorFunction) {
+    public final int getAndAccumulate(int i, int x, IntBinaryOperator accumulatorFunction) {
         long offset = checkedByteOffset(i);
-        long prev, next;
+        int prev, next;
         do {
             prev = getRaw(offset);
-            next = accumulatorFunction.applyAsLong(prev, x);
+            next = accumulatorFunction.applyAsInt(prev, x);
         } while (!compareAndSetRaw(offset, prev, next));
         return prev;
     }
 
-    public final long accumulateAndGet(int i, long x,
-                                       LongBinaryOperator accumulatorFunction) {
+    public final int accumulateAndGet(int i, int x, IntBinaryOperator accumulatorFunction) {
         long offset = checkedByteOffset(i);
-        long prev, next;
+        int prev, next;
         do {
             prev = getRaw(offset);
-            next = accumulatorFunction.applyAsLong(prev, x);
+            next = accumulatorFunction.applyAsInt(prev, x);
         } while (!compareAndSetRaw(offset, prev, next));
         return next;
     }
