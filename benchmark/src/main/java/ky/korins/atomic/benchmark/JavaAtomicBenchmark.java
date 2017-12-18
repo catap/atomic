@@ -5,9 +5,8 @@ import org.openjdk.jmh.annotations.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @State(Scope.Benchmark)
-public class JavaAtomicBenchmark {
+public class JavaAtomicBenchmark extends BaseAtomicBenchmark {
     AtomicLong atomicLong = new AtomicLong(0L);
-    AtomicLong secondAtomicLong = new AtomicLong(0L);
 
     final static int batchSize = 10000;
 
@@ -21,28 +20,14 @@ public class JavaAtomicBenchmark {
 
     @Benchmark
     @OperationsPerInvocation(batchSize)
-    public void CAS_Loop() {
+    public void CAS_Loop(Counter counter) {
         for (int i = 0; i < batchSize; i++) {
-            long old;
-            do {
-                old = atomicLong.get();
-            } while (!atomicLong.compareAndSet(old, old + 1L));
-        }
-    }
-
-    @Benchmark
-    @OperationsPerInvocation(batchSize)
-    public void Sub_CAS_Loops() {
-        for (int i = 0; i < batchSize; i++) {
-            while (true) {
-                final long old = atomicLong.get();
-                if (atomicLong.compareAndSet(old, old + i % 2)) {
-                    final long secondOld = secondAtomicLong.get();
-                    if (secondAtomicLong.compareAndSet(secondOld, secondOld + 1L)) {
-                        break;
-                    }
-                }
+            while (!atomicLong.compareAndSet(0, Long.MAX_VALUE)) {
+                counter.casTotal++;
             }
+            counter.casTotal++;
+            counter.casSuccess++;
+            atomicLong.set(0);
         }
     }
 }

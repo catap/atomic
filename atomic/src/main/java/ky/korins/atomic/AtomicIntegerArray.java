@@ -2,13 +2,12 @@ package ky.korins.atomic;
 
 import sun.misc.Unsafe;
 
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntUnaryOperator;
 
 public class AtomicIntegerArray implements java.io.Serializable {
     private static final long serialVersionUID = -800117181216365580L;
-
-    private final int backoffInterval;
 
     private static final Unsafe unsafe = Java9Unsafe.getUnsafe();
 
@@ -38,28 +37,10 @@ public class AtomicIntegerArray implements java.io.Serializable {
 
     public AtomicIntegerArray(int length) {
         array = new int[length];
-        backoffInterval = 1;
-    }
-
-    public AtomicIntegerArray(int length, int backoffInterval) {
-        if (backoffInterval < 1) {
-            throw new IllegalArgumentException("Backoff interval should be great than 0");
-        }
-        this.array = new int[length];
-        this.backoffInterval = backoffInterval;
     }
 
     public AtomicIntegerArray(int[] array) {
         this.array = array.clone();
-        backoffInterval = 1;
-    }
-
-    public AtomicIntegerArray(int[] array, int backoffInterval) {
-        if (backoffInterval < 1) {
-            throw new IllegalArgumentException("Backoff interval should be great than 0");
-        }
-        this.array = array.clone();
-        this.backoffInterval = backoffInterval;
     }
 
     public final int length() {
@@ -98,7 +79,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
         if (unsafe.compareAndSwapInt(array, offset, expect, update)) {
             return true;
         }
-        unsafe.park(false, backoffInterval);
+        LockSupport.parkNanos(1);
         return false;
     }
 

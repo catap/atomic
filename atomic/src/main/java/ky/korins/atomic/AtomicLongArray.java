@@ -2,13 +2,12 @@ package ky.korins.atomic;
 
 import sun.misc.Unsafe;
 
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.LongBinaryOperator;
 import java.util.function.LongUnaryOperator;
 
 public class AtomicLongArray implements java.io.Serializable {
     private static final long serialVersionUID = -800117181216365580L;
-
-    private final long backoffInterval;
 
     private static final Unsafe unsafe = Java9Unsafe.getUnsafe();
 
@@ -38,28 +37,10 @@ public class AtomicLongArray implements java.io.Serializable {
 
     public AtomicLongArray(int length) {
         array = new long[length];
-        backoffInterval = 1;
-    }
-
-    public AtomicLongArray(int length, long backoffInterval) {
-        if (backoffInterval < 1) {
-            throw new IllegalArgumentException("Backoff interval should be great than 0");
-        }
-        this.array = new long[length];
-        this.backoffInterval = backoffInterval;
     }
 
     public AtomicLongArray(long[] array) {
         this.array = array.clone();
-        backoffInterval = 1;
-    }
-
-    public AtomicLongArray(long[] array, long backoffInterval) {
-        if (backoffInterval < 1) {
-            throw new IllegalArgumentException("Backoff interval should be great than 0");
-        }
-        this.array = array.clone();
-        this.backoffInterval = backoffInterval;
     }
 
     public final int length() {
@@ -98,7 +79,7 @@ public class AtomicLongArray implements java.io.Serializable {
         if (unsafe.compareAndSwapLong(array, offset, expect, update)) {
             return true;
         }
-        unsafe.park(false, backoffInterval);
+        LockSupport.parkNanos(1);
         return false;
     }
 

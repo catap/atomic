@@ -2,9 +2,9 @@ package ky.korins.atomic;
 
 import sun.misc.Unsafe;
 
-public class AtomicBoolean implements java.io.Serializable {
+import java.util.concurrent.locks.LockSupport;
 
-    private final long backoffInterval;
+public class AtomicBoolean implements java.io.Serializable {
 
     private static final Unsafe unsafe = Java9Unsafe.getUnsafe();
 
@@ -20,21 +20,11 @@ public class AtomicBoolean implements java.io.Serializable {
 
     private volatile int value;
 
-    public AtomicBoolean(boolean initialValue, long backoffInterval) {
-        if (backoffInterval < 1) {
-            throw new IllegalArgumentException("Backoff interval should be great than 0");
-        }
-        this.value = initialValue ? 1 : 0;
-        this.backoffInterval = backoffInterval;
-    }
-
     public AtomicBoolean(boolean initialValue) {
         value = initialValue ? 1 : 0;
-        backoffInterval = 1L;
     }
 
     public AtomicBoolean() {
-        backoffInterval = 1L;
     }
 
     public final boolean get() {
@@ -47,7 +37,7 @@ public class AtomicBoolean implements java.io.Serializable {
         if (unsafe.compareAndSwapInt(this, offset, e, u)) {
             return true;
         }
-        unsafe.park(false, backoffInterval);
+        LockSupport.parkNanos(1);
         return false;
     }
 

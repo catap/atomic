@@ -6,7 +6,6 @@ import org.openjdk.jmh.annotations.*;
 @State(Scope.Benchmark)
 public class KorinskyAtomicBenchmark {
     AtomicLong atomicLong = new AtomicLong();
-    AtomicLong secondAtomicLong = new AtomicLong();
 
     final static int batchSize = 10000;
 
@@ -20,28 +19,14 @@ public class KorinskyAtomicBenchmark {
 
     @Benchmark
     @OperationsPerInvocation(batchSize)
-    public void CAS_Loop() {
+    public void CAS_Loop(BaseAtomicBenchmark.Counter counter) {
         for (int i = 0; i < batchSize; i++) {
-            long old;
-            do {
-                old = atomicLong.get();
-            } while (!atomicLong.compareAndSet(old, old + 1L));
-        }
-    }
-
-    @Benchmark
-    @OperationsPerInvocation(batchSize)
-    public void Sub_CAS_Loops() {
-        for (int i = 0; i < batchSize; i++) {
-            while (true) {
-                final long old = atomicLong.get();
-                if (atomicLong.compareAndSet(old, old + i % 2)) {
-                    final long secondOld = secondAtomicLong.get();
-                    if (secondAtomicLong.compareAndSet(secondOld, secondOld + 1L)) {
-                        break;
-                    }
-                }
+            while (!atomicLong.compareAndSet(0, Long.MAX_VALUE)) {
+                counter.casTotal++;
             }
+            counter.casTotal++;
+            counter.casSuccess++;
+            atomicLong.set(0);
         }
     }
 }

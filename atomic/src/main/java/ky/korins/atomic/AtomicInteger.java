@@ -2,13 +2,12 @@ package ky.korins.atomic;
 
 import sun.misc.Unsafe;
 
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntUnaryOperator;
 
 public class AtomicInteger extends Number implements java.io.Serializable {
     private static final long serialVersionUID = -7198750120564725673L;
-
-    private final long backoffInterval;
 
     private static final Unsafe unsafe = Java9Unsafe.getUnsafe();
 
@@ -24,21 +23,11 @@ public class AtomicInteger extends Number implements java.io.Serializable {
 
     private volatile int value;
 
-    public AtomicInteger(int initialValue, long backoffInterval) {
-        if (backoffInterval < 1) {
-            throw new IllegalArgumentException("Backoff interval should be great than 0");
-        }
-        this.value = initialValue;
-        this.backoffInterval = backoffInterval;
-    }
-
     public AtomicInteger(int initialValue) {
         this.value = initialValue;
-        backoffInterval = 1L;
     }
 
     public AtomicInteger() {
-        backoffInterval = 1L;
     }
 
     public int get() {
@@ -57,7 +46,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
         if (unsafe.compareAndSwapInt(this, offset, expect, update)) {
             return true;
         }
-        unsafe.park(false, backoffInterval);
+        LockSupport.parkNanos(1);
         return false;
     }
 
