@@ -5,7 +5,7 @@
     <groupId>ky.korins</groupId>
     <artifactId>atomic</artifactId>
     <packaging>jar</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
 
     <name>Korinsky's atomic</name>
     <description>The low-latency atomic operations for a multi-threads environment for JVM.</description>

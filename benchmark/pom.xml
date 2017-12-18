@@ -5,13 +5,13 @@
     <parent>
         <groupId>ky.korins</groupId>
         <artifactId>atomic-parent</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>atomic-benchmark</artifactId>
     <packaging>jar</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
 
     <dependencies>
         <dependency>
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>ky.korins</groupId>
             <artifactId>atomic</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.1</version>
         </dependency>
     </dependencies>
 
