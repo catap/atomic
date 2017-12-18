@@ -16,7 +16,7 @@ It is in Maven Central, and can be added to a Maven project as follows
         <dependency>
             <groupId>ky.korins</groupId>
             <artifactId>atomic</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
 ```
 
